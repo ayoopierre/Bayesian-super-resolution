@@ -72,10 +72,8 @@ $$
 Since we know that both are Gaussians we essentially keep the exponating terms a and some constant:
 $$
 \log p(\mathbf x| \mathbf Y) =
--\frac{1}{2\sigma^2}(\mathbf Y - \mathbf A\mathbf x)^T(\mathbf Y - \mathbf A\mathbf x)
-- \frac{1}{2}(\mathbf x - \boldsymbol\mu_0)^T\mathbf K^{-1}(\mathbf x - \boldsymbol \mu_0) + const
-$$
-**Note** - Here we take MLE like approach for $\boldsymbol \theta$ rather than modeling it as a random variable we assume this to be constant parameter. This allows us in return to model the conditional as a Gaussian. In the first part we have only variance propagated from noise factor from the model, and for the second part, which is prior estimate variance comes from kernel like estmation.
+-\frac{1}{2\sigma^2}(\mathbf Y - \mathbf A\mathbf x)^T(\mathbf Y - \mathbf A\mathbf x) - \frac{1}{2}(\mathbf x - \boldsymbol\mu_0)^T\mathbf K^{-1}(\mathbf x - \boldsymbol \mu_0) + const$$
+**Note** - Here we take MLE like approach for rather than modeling it as a random variable we assume this to be constant parameter. This allows us in return to model the conditional as a Gaussian. In the first part we have only variance propagated from noise factor from the model, and for the second part, which is prior estimate variance comes from kernel like estmation.
 
 We now expand both multiplication terms:
 $$
@@ -101,16 +99,10 @@ $$
 $$
 So now we group for GP:
 $$
-\log(\mathbf x|\mathbf Y) =
--\frac{1}{2}\mathbf x \underbrace{
-\left (
-    \frac{1}{\sigma^2}\mathbf A^T\mathbf A+\mathbf K^{-1}
+\log(\mathbf x|\mathbf Y) = -\frac{1}{2}\mathbf x \underbrace{\left (\frac{1}{\sigma^2}\mathbf A^T\mathbf A+\mathbf K^{-1}
 \right)
-}_{\boldsymbol \Sigma_x^{-1}}\mathbf x^T 
-+ \mathbf x^T \underbrace{
-\left (
-    \frac{1}{\sigma^2}\mathbf A^T\mathbf Y+\mathbf K^{-1}\boldsymbol \mu_0
-\right)}_{\boldsymbol \Sigma_x^{-1}\boldsymbol \mu_x}
+}_{\boldsymbol \Sigma_x^{-1}}\mathbf x^T+ \mathbf x^T \underbrace{
+\left (\frac{1}{\sigma^2}\mathbf A^T\mathbf Y+\mathbf K^{-1}\boldsymbol \mu_0\right)}_{\boldsymbol \Sigma_x^{-1}\boldsymbol \mu_x}
 $$
 
 
@@ -289,4 +281,42 @@ $$
 which basically defines correlation along the rows. The other matrix is essentially the same but defining correlation along columns. If we apply this matrix to image $\mathbf V \in \mathbb R^{H \times W}$:
 $$
 \mathbf K\mathbf V = \eta^2\mathbf K_u\mathbf V\mathbf K_v^T
+$$
+
+**Note** - this part is called the whitening transformation. Basically we want to transform the initial distribution with complex covariance matrix into new set of variables which are uncorelated. [On whitening transformation.](whitening-transformation.md)
+
+**Handling the $\mathbf K$ matrix**
+The issue with this formulation is that we have really large covariance matrix. Not only it is to huge to store directlly, nor is it efficient to calculate entry on each access but also it is not well behaved. Therefore usually
+We also will use the $\mathbf K^{\frac{1}{2}}$. We shall define:
+$$
+\mathbf{L} \mathbf{L} = \mathbf{K}
+$$
+To compute this we first eigen-decompose (only once in whole pipeline):
+$$
+\mathbf{K}_u = \mathbf{U}_u\operatorname{diag}{\boldsymbol\lambda_u}\mathbf{U}_u^T
+$$
+$$
+\mathbf{K}_v = \mathbf{U}_v\operatorname{diag}{\boldsymbol\lambda_v}\mathbf{U}_v^T
+$$
+where $\boldsymbol \lambda_u$ is a vector of eigen values.
+
+## Estimating rotations, shifts and noise variance
+Let collect all those parametrs into single vector (the $\theta_1$ remains zero vector - no shift and no rotation):
+$$
+\boldsymbol\theta = (\theta_2, \theta_3, ..., \theta_k, \log\sigma^2)
+$$
+$$
+\widehat{(\boldsymbol\theta, \sigma^2)} = \argmax_{\boldsymbol\theta, \sigma^2} P(\mathbf Y | \boldsymbol\theta, \sigma^2) = \argmax_{\boldsymbol\theta, \sigma^2} 
+\int P(\mathbf x)P(\mathbf Y | \mathbf x, \boldsymbol \theta,  \sigma^2)d\mathbf x
+$$
+**Note** - Since those parameters are global and there are relatively few of those, sice per image we have only three parametrs to estimate. Therefore we can subsample low res photo to even lower reslution to lower the computational effort during estimation while not lowering quality if parameter estimation that much.
+
+Helpers:
+1. Initial estimation. For initial $\theta_k$ we can estimate via standard methods (like some builtin OpenCV method)
+2. Find some way for initial noise estimation.
+
+$$
+\mathbf{Y} 
+\sim
+\mathcal{N}(\mathbf{A}\boldsymbol{\mu_0}, \mathbf A\mathbf K\mathbf A^T + \sigma^2\mathbf I)
 $$
