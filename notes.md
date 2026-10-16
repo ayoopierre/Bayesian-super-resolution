@@ -113,7 +113,7 @@ $$
 $$
 
 $$
-\begin{align}
+\begin{align*}
 \mathbf A = \begin{bmatrix}
 \mathbf A_1 \\
 \mathbf A_2 \\
@@ -127,14 +127,14 @@ $$
 \vdots \\
 \mathbf y_k \\
 \end{bmatrix}
-\end{align}
+\end{align*}
 $$
 $$
-\begin{align}
+\begin{align*}
 \mathbf A^T\mathbf A = \sum_k \mathbf A_k^T\mathbf A_k 
 &&
 \mathbf A^T\mathbf Y = \sum_k\mathbf A_k^T\mathbf y_k
-\end{align}
+\end{align*}
 $$
 And this yields original equations that were initially listed.
 $$
@@ -195,11 +195,11 @@ If we were to estimate everything at the same time, meaning estimate alligment $
 **Efficient estimator computation**
 We have established that:
 $$
-\begin{align}
+\begin{align*}
 (\boldsymbol {\hat\theta}, \hat \sigma) =
 \arg\max_{(\boldsymbol\theta, \sigma)} \int p(\mathbf x)p(
 \mathbf Y|\mathbf x,\boldsymbol \theta, \sigma)d\mathbf x
-\end{align}
+\end{align*}
 $$
 Which means we basically marginalize over $\mathbf x$. Therefore - speaking of the inregral inside this expression - we have a Gaussian integral of product of two Gaussians since we have $\mathbf x \sim \mathcal N(\boldsymbol \mu_0, \mathbf K$) as a a'priori distribution of $\mathbf x$ which we need for $p(\mathbf x)$ and the $p(\mathbf Y|\mathbf x, \boldsymbol \theta, \sigma)$ is also Gaussian from intial equation. This means that
 $$
@@ -249,10 +249,10 @@ $\mathbf G$ is a convolution with Gaussian kernel of standard deviation $s$, mea
 **Decimation - downscaling operator**
 Basically we sample every other pixel. In this case we sample every $r$-th pixel.
 $$
-\begin{align}
+\begin{align*}
 (\mathbf D\mathbf z)(i, j) = \mathbf z(ri + o, rj + o) &&
 o = \lfloor{\frac{r}{2}}\rfloor
-\end{align}
+\end{align*}
 $$
 **Joining all elements**
 $$
@@ -269,6 +269,7 @@ which means:
 $$
 \mathbf W(\theta_1) = \mathbf I_d 
 $$
+Basically the $\mathbf A$ matrix will be a samplig matrix, it will take some number of the pixels and "blend them together".
 **Setting up the prior**
 For $\boldsymbol \mu_0$ we can start with bi-linear upsampling. This is best guess before as the prior. Now for the covariance:
 $$
