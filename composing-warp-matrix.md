@@ -94,3 +94,120 @@ There are couple ways we could handle that part:
 
 ## Practical aspects
 Composing the complete transformation matrix may be unpractical. Basically this matrix is in $\mathbf A \in \mathbb R^{HW \times HW}$ which even for modest image sizes may be quite huge. Therefore we shall avoid building the complete matrix and rather perform pixel-by-pixel computation.
+
+## Diffrentiating warp
+Part of the Bayes formulation of super-resolution requires parameter estimation for rotation and shift. Lets consider easier case. Suppose we have image $\mathbf I$ and rotated and shifted counterpart $\mathbf J$ but let us flattent  tham to vectors $i,j \in \mathbb R^N$. Lets assume that we have parameter vector:
+$$
+p = \begin{bmatrix}
+\theta \\
+d_x \\
+d_y 
+\end{bmatrix} \in \mathbb R^3
+$$
+Let the transfomration for a given pixel be formulated as:
+$$
+\hat j = A(p)i
+$$
+Let:
+$$
+r(p) = A(p)i - j
+$$
+$$
+L(p) = ||r(p)||= \frac{1}{2}r^Tr = \sum_i r_i^2
+$$
+Now suppose we were to perturb parameters by $\delta p$.
+$$
+\delta L = L(p + \delta p) - L(p)
+$$
+We can also denote up to first order apprpximation (this is only a sketch, I suppose if we were to track everything in limit form, everything from second order onwards would converge faster to 0, ergo it will not be used in derivation):
+$$
+\delta L = (\frac{\partial L}{\partial p})^T\delta p
+$$
+$$
+\delta L =
+\begin{bmatrix}
+\frac{\partial L}{\partial \theta} &
+\frac{\partial L}{\partial d_x} &
+\frac{\partial L}{\partial d_y}
+\end{bmatrix}
+\begin{bmatrix}
+\delta \theta \\
+\delta d_x \\
+\delta d_y
+\end{bmatrix} = 
+\frac{\partial L}{\partial \theta}\delta\theta +
+\frac{\partial L}{\partial d_x}\delta d_x +
+\frac{\partial L}{\partial d_y}\delta d_y
+$$
+Similarly (note however that the horizontal vector is actually a block matrix, basically $\delta A$ is a matrix):
+$$
+\delta A =
+\begin{bmatrix}
+\frac{\partial A}{\partial \theta} &
+\frac{\partial A}{\partial d_x} &
+\frac{\partial A}{\partial d_y}
+\end{bmatrix}
+\begin{bmatrix}
+\delta \theta \\
+\delta d_x \\
+\delta d_y
+\end{bmatrix} = 
+\frac{\partial A}{\partial \theta}\delta\theta +
+\frac{\partial A}{\partial d_x}\delta d_x +
+\frac{\partial A}{\partial d_y}\delta d_y
+$$
+So now:
+$$
+\delta r = ((A + \delta A)i - j) - (Ai + j) = \delta Ai
+$$
+(If we plug in $\delta A$ and multiply by $i$ we see that $\delta \theta, \delta d_x, \delta d_y$ are perturbations, but also scalars so we can move $i$)
+$$
+\delta r =
+\frac{\partial A}{\partial \theta}i\delta\theta +
+\frac{\partial A}{\partial d_x}i\delta d_x +
+\frac{\partial A}{\partial d_y}i\delta d_y
+$$
+(Second order expressions converge to fast - ignore them)
+$$
+\begin{align*}
+\delta L &= \frac{1}{2}(r + \delta r)^T(r + \delta r) - \frac{1}{2}r^Tr
+\\ &= \frac{1}{2}((\delta r)^Tr + r^T\delta r)
+\\ &= r^T\delta r
+\end{align*}
+$$
+Plugging in other things:
+$$
+\begin{align*}
+\delta L &= (Ai - j)^T \left(
+\frac{\partial A}{\partial \theta}i\delta\theta +
+\frac{\partial A}{\partial d_x}i\delta d_x +
+\frac{\partial A}{\partial d_y}i\delta d_y
+\right)
+\\ &= (Ai - j)^T \begin{bmatrix}
+\frac{\partial A}{\partial \theta}i \\
+\frac{\partial A}{\partial d_x}i \\
+\frac{\partial A}{\partial d_y}i
+\end{bmatrix}^T\delta p
+\\ &= \left(\underbrace{
+\begin{bmatrix}
+\frac{\partial A}{\partial \theta}i \\
+\frac{\partial A}{\partial d_x}i \\
+\frac{\partial A}{\partial d_y}i
+\end{bmatrix}
+(Ai - j)}_{\nabla_p L}
+\right)^T\delta p
+\end{align*}
+$$
+And finally we get:
+$$
+\nabla_p L = \begin{bmatrix}
+\frac{\partial A}{\partial \theta}i \\
+\frac{\partial A}{\partial d_x}i \\
+\frac{\partial A}{\partial d_y}i
+\end{bmatrix}
+(Ai - j)
+$$
+Where - to clear any confusion (basically perturbation with respect to given variable):
+$$
+\frac{\partial A}{\partial \theta} = A(\theta+\delta\theta) - A(\theta)
+$$
